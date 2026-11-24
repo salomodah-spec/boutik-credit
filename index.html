@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Boutik Crédit</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f5ef;--sf:#fff;--tx:#14231a;--mu:#5d6b62;--br:#0f5132;--brt:#fff;--ac:#f2a900;--rd:#b3261e;--ln:#dfe6dc;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1a14;--sf:#1a2a21;--tx:#eef3ee;--mu:#9bb0a2;--br:#4fbf86;--brt:#06180e;--ac:#f2b72a;--rd:#ff8a80;--ln:#2b3f33}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1a14;--sf:#1a2a21;--tx:#eef3ee;--mu:#9bb0a2;--br:#4fbf86;--brt:#06180e;--ac:#f2b72a;--rd:#ff8a80;--ln:#2b3f33}
+*,*:before,*:after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:500 17px/1.4 "Bricolage Grotesque",system-ui,sans-serif;padding-bottom:84px}
+main{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:0 0 12px;font-weight:800}
+.big{background:var(--br);color:var(--brt);border-radius:18px;padding:18px;margin-bottom:14px}
+.big small{opacity:.85;font-size:15px}.big b{display:block;font-size:36px;font-weight:800;line-height:1.1}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:14px;margin-bottom:8px;width:100%;color:inherit;font:inherit;text-align:left}
+.row small{color:var(--mu);display:block}
+.amt{font-weight:800}.neg{color:var(--rd)}
+button,.btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:14px 16px;background:var(--br);color:var(--brt);cursor:pointer;text-decoration:none;display:inline-block;text-align:center}
+.alt{background:transparent;color:var(--br);border:2px solid var(--br)}
+.wa{background:#1fa855;color:#fff}.full{width:100%;margin-top:8px}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+input,select{font:inherit;width:100%;padding:13px;border-radius:12px;border:1.5px solid var(--ln);background:var(--sf);color:var(--tx);margin:6px 0 10px}
+label{font-size:15px;color:var(--mu)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--sf);border-top:1px solid var(--ln);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;background:none;color:var(--mu);border-radius:0;padding:12px 4px;font-size:14px}
+nav button.on{color:var(--br);box-shadow:inset 0 3px 0 var(--ac)}
+.ov{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-end;z-index:5}
+.sh{background:var(--bg);width:100%;max-width:560px;margin:0 auto;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.warn{color:var(--rd)}.back{background:none;color:var(--br);padding:0 0 10px}
+.tog{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.tog button{background:var(--sf);color:var(--tx);border:2px solid var(--ln)}.tog button.on{border-color:var(--br);color:var(--br)}
+.ex{font-size:13px;color:var(--mu);text-align:center;margin-top:18px}
+</style></head><body><main id="m"></main>
+<nav id="n"></nav><div id="o"></div>
+<script>
+var S,V='dettes',C=null,MODE='cash',K='bc-proto-1';
+function seed(){var n=Date.now();return{clients:[{id:1,name:'Mama Félicité',phone:'0197000001',tx:[{t:n-86400000*3,k:'c',a:4500,n:'Riz, huile'}]},{id:2,name:'Koffi (voisin)',phone:'0197000002',tx:[{t:n-86400000,k:'c',a:2000,n:'Sucre'}]}],products:[{id:1,name:'Riz 1 kg',buy:600,sell:750,qty:30},{id:2,name:'Huile 1 L',buy:1100,sell:1400,qty:12},{id:3,name:'Sachet d’eau',buy:25,sell:50,qty:3}],sales:[]}}
+try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!S)S=seed();
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+function f(n){return Math.round(n).toLocaleString('fr-FR')+' F'}
+function e(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function bal(c){return c.tx.reduce(function(s,x){return s+(x.k=='c'?x.a:-x.a)},0)}
+function td(t){return new Date(t).toDateString()==new Date().toDateString()}
+function id(){return Date.now()+Math.floor(Math.random()*999)}
+function go(v){V=v;C=null;draw()}
+function sheet(h){document.getElementById('o').innerHTML=h?'<div class="ov" onclick="if(event.target==this)sheet()"><div class="sh">'+h+'</div></div>':''}
+function draw(){
+ var h='',t=S.clients.reduce(function(s,c){return s+Math.max(0,bal(c))},0);
+ if(V=='dettes'&&!C){
+  h='<div class="big"><small>Dettes à récupérer</small><b>'+f(t)+'</b></div><button class="full" onclick="fClient()">+ Nouveau client</button><div style="height:12px"></div>';
+  S.clients.slice().sort(function(a,b){return bal(b)-bal(a)}).forEach(function(c){var b=bal(c);h+='<button class="row" onclick="C='+c.id+';draw()"><span>'+e(c.name)+'<small>'+e(c.phone||'')+'</small></span><span class="amt '+(b>0?'neg':'')+'">'+f(b)+'</span></button>'});
+  if(!S.clients.length)h+='<p>Ajoutez votre premier client pour noter ses dettes.</p>';
+ }else if(V=='dettes'){
+  var c=S.clients.filter(function(x){return x.id==C})[0],b=bal(c),p=(c.phone||'').replace(/\D/g,'');if(p&&p.indexOf('229')!=0)p='229'+p;
+  var msg=encodeURIComponent('Bonjour '+c.name+', il reste '+f(b)+' à régler à la boutique. Merci !');
+  h='<button class="back" onclick="C=null;draw()">‹ Retour</button><h1>'+e(c.name)+'</h1><div class="big"><small>Il doit</small><b>'+f(b)+'</b></div><div class="acts"><button onclick="fTx('+c.id+',\'c\')">Il prend à crédit</button><button class="alt" onclick="fTx('+c.id+',\'p\')">Il paie</button></div>';
+  if(b>0&&p)h+='<a class="btn wa full" target="_blank" rel="noopener" href="https://wa.me/'+p+'?text='+msg+'">Rappel par WhatsApp</a>';
+  h+='<button class="alt full" onclick="delC('+c.id+')">Supprimer ce client</button><h1 style="margin-top:20px;font-size:18px">Historique</h1>';
+  c.tx.slice().reverse().forEach(function(x){h+='<div class="row"><span>'+(x.k=='c'?'Crédit':'Paiement')+(x.n?' · '+e(x.n):'')+'<small>'+new Date(x.t).toLocaleDateString('fr-FR')+'</small></span><span class="amt '+(x.k=='c'?'neg':'')+'">'+(x.k=='c'?'+':'−')+f(x.a)+'</span></div>'});
+ }else if(V=='vente'){
+  h='<h1>Nouvelle vente</h1><label>Produit</label><select id="sp" onchange="pr()">'+S.products.map(function(p){return'<option value="'+p.id+'">'+e(p.name)+' ('+p.qty+' en stock) · '+f(p.sell)+'</option>'}).join('')+'</select><label>Prix unitaire en FCFA (modifiable)</label><input id="spx" type="number" inputmode="numeric" value="'+(S.products.length?S.products[0].sell:0)+'"><label>Quantité</label><input id="sq" type="number" inputmode="numeric" min="1" value="1"><div class="tog"><button class="'+(MODE=='cash'?'on':'')+'" onclick="MODE=\'cash\';draw()">Comptant</button><button class="'+(MODE=='credit'?'on':'')+'" onclick="MODE=\'credit\';draw()">À crédit</button></div>';
+  if(MODE=='credit')h+='<label>Client</label><select id="sc">'+S.clients.map(function(c){return'<option value="'+c.id+'">'+e(c.name)+'</option>'}).join('')+'</select>';
+  h+='<button class="full" onclick="sell()">Valider la vente</button>';
+ }else if(V=='aide'){h=AIDE}else if(V=='stock'){
+  h='<h1>Stock</h1><p style="margin:0 0 10px;color:var(--mu)">Touchez un produit pour changer son prix, son nom ou sa quantité.</p><button class="full" onclick="fProd()">+ Nouveau produit</button><button class="alt full" onclick="fOpen()">Ouvrir un sac (convertir en détail)</button><div style="height:12px"></div>';
+  S.products.forEach(function(p){h+='<button class="row" onclick="fEdit('+p.id+')"><span>'+e(p.name)+'<small>Achat '+f(p.buy)+' · Vente '+f(p.sell)+'</small></span><span class="amt '+(p.qty<=5?'neg':'')+'">'+p.qty+(p.qty<=5?' ⚠':'')+'</span></button>'});
+ }else{
+  var s=S.sales.filter(function(x){return td(x.t)}),tot=0,pr=0,cr=0,pay=0;
+  s.forEach(function(x){tot+=x.a;pr+=x.p;if(!x.cash)cr+=x.a});
+  S.clients.forEach(function(c){c.tx.forEach(function(x){if(x.k=='p'&&td(x.t))pay+=x.a})});
+  var low=S.products.filter(function(p){return p.qty<=5});
+  h='<h1>Bilan du jour</h1><div class="big"><small>Ventes d’aujourd’hui</small><b>'+f(tot)+'</b></div>';
+  [['Bénéfice estimé',f(pr)],['Vendu comptant',f(tot-cr)],['Vendu à crédit',f(cr)],['Dettes payées aujourd’hui',f(pay)],['Dettes restantes',f(t)]].forEach(function(r){h+='<div class="row"><span>'+r[0]+'</span><span class="amt">'+r[1]+'</span></div>'});
+  h+='<h1 style="font-size:18px;margin:18px 0 8px">Ventes du jour</h1>';if(!s.length)h+='<p style="color:var(--mu)">Aucune vente aujourd’hui.</p>';s.slice().reverse().forEach(function(x){h+='<div class="row"><span>'+tm(x)+(x.q?x.q+' × ':'')+e(x.n||'Vente')+'<small>'+(x.cash?'Comptant':'Crédit'+(x.c?' · '+e(x.c):''))+'</small></span><span class="amt">'+f(x.a)+'</span></div>'});
+  h+='<h1 style="font-size:18px;margin:22px 0 8px">Historique des ventes</h1><label>Voir un jour précis</label><input type="date" value="'+HD+'" onchange="hd(this.value)">'+(HD?'<button class="alt full" onclick="hd(0)">Voir tous les jours</button>':'')+'<div class="tog" style="grid-template-columns:1fr 1fr 1fr">'+['Tout','Comptant','Crédit'].map(function(b,i){return'<button class="'+(['all','cash','credit'][i]==HF?'on':'')+'" onclick="hf('+i+')">'+b+'</button>'}).join('')+'</div>';
+  var al=S.sales.filter(function(x){return (HF=='all'||(HF=='cash'?x.cash:!x.cash))&&(!HD||new Date(x.t).toLocaleDateString('sv-SE')==HD)}).slice().reverse(),dt={},last='';
+  al.forEach(function(x){var d=new Date(x.t).toLocaleDateString('fr-FR');dt[d]=(dt[d]||0)+x.a});
+  if(!al.length)h+='<p style="color:var(--mu)">Aucune vente.</p>';
+  al.slice(0,150).forEach(function(x){var d=new Date(x.t).toLocaleDateString('fr-FR');if(d!=last){last=d;h+='<p style="margin:14px 0 6px"><b>'+(td(x.t)?'Aujourd’hui':d)+'</b> · '+f(dt[d])+'</p>'}h+='<div class="row"><span>'+tm(x)+(x.q?x.q+' × ':'')+e(x.n||'Vente')+'<small>'+(x.cash?'Comptant':'Crédit'+(x.c?' · '+e(x.c):''))+'</small></span><span class="amt">'+f(x.a)+'</span></div>'});
+  if(low.length)h+='<p class="warn">À racheter : '+low.map(function(p){return e(p.name)}).join(', ')+'</p>';
+  h+='<button class="alt full" onclick="if(confirm(\'Effacer toutes les données et remettre l’exemple ?\')){S=seed();save();draw()}">Remettre l’exemple</button><button class="alt full" onclick="wipe()">Tout effacer (partir de zéro)</button>';
+ }
+ if(V!='bilan'&&!C||V=='bilan'&&0)h+='';
+ h+='<p class="ex">'+DL+'Les données restent sur ce téléphone.</p>';
+ document.getElementById('m').innerHTML=h;
+ var T=[['dettes','Dettes'],['vente','Vendre'],['stock','Stock'],['bilan','Bilan'],['aide','Aide']];
+ document.getElementById('n').innerHTML=T.map(function(x){return'<button class="'+(V==x[0]?'on':'')+'" onclick="go(\''+x[0]+'\')">'+x[1]+'</button>'}).join('');
+}
+function fClient(){sheet('<h1>Nouveau client</h1><label>Nom</label><input id="a1"><label>Téléphone (WhatsApp)</label><input id="a2" type="tel" inputmode="tel"><button class="full" onclick="addC()">Enregistrer</button>')}
+function addC(){var n=a1.value.trim();if(!n){a1.focus();return}S.clients.push({id:id(),name:n,phone:a2.value.trim(),tx:[]});save();sheet();draw()}
+function fTx(cid,k){sheet('<h1>'+(k=='c'?'Crédit accordé':'Paiement reçu')+'</h1><label>Montant (FCFA)</label><input id="a1" type="number" inputmode="numeric"><label>Note (facultatif)</label><input id="a2"><button class="full" onclick="addT('+cid+',\''+k+'\')">Enregistrer</button>')}
+function addT(cid,k){var a=parseFloat(a1.value);if(!(a>0)){a1.focus();return}S.clients.filter(function(c){return c.id==cid})[0].tx.push({t:Date.now(),k:k,a:a,n:a2.value.trim()});save();sheet();draw()}
+function fProd(){sheet('<h1>Nouveau produit</h1><label>Nom</label><input id="a1"><label>Prix d’achat (FCFA)</label><input id="a2" type="number" inputmode="numeric"><label>Prix de vente (FCFA)</label><input id="a3" type="number" inputmode="numeric"><label>Quantité en stock</label><input id="a4" type="number" inputmode="numeric"><button class="full" onclick="addP()">Enregistrer</button>')}
+function addP(){var n=a1.value.trim();if(!n){a1.focus();return}S.products.push({id:id(),name:n,buy:+a2.value||0,sell:+a3.value||0,qty:+a4.value||0});save();sheet();draw()}
+function fQty(pid){var p=S.products.filter(function(x){return x.id==pid})[0];sheet('<h1>'+e(p.name)+'</h1><label>Stock actuel : '+p.qty+'. Quantité reçue</label><input id="a1" type="number" inputmode="numeric"><button class="full" onclick="addQ('+pid+')">Ajouter au stock</button>')}
+function addQ(pid){var q=parseInt(a1.value);if(!(q>0)){a1.focus();return}S.products.filter(function(x){return x.id==pid})[0].qty+=q;save();sheet();draw()}
+function pr(){var p=S.products.filter(function(x){return x.id==document.getElementById('sp').value})[0];if(p)document.getElementById('spx').value=p.sell}
+function fEdit(pid){var p=S.products.filter(function(x){return x.id==pid})[0];sheet('<h1>Modifier le produit</h1><label>Nom</label><input id="a1" value="'+e(p.name)+'"><label>Prix d’achat (FCFA)</label><input id="a2" type="number" inputmode="numeric" value="'+p.buy+'"><label>Prix de vente (FCFA)</label><input id="a3" type="number" inputmode="numeric" value="'+p.sell+'"><label>Quantité en stock</label><input id="a4" type="number" inputmode="numeric" value="'+p.qty+'"><button class="full" onclick="saveP('+pid+')">Enregistrer</button><button class="alt full" onclick="delP('+pid+')">Supprimer ce produit</button>')}
+function saveP(pid){var p=S.products.filter(function(x){return x.id==pid})[0],n=a1.value.trim();if(!n){a1.focus();return}p.name=n;p.buy=+a2.value||0;p.sell=+a3.value||0;p.qty=+a4.value||0;save();sheet();draw()}
+function delP(pid){if(confirm('Supprimer ce produit ?')){S.products=S.products.filter(function(x){return x.id!=pid});save();sheet();draw()}}
+function ai(t,x){return'<div class="row" style="display:block"><b>'+t+'</b><small style="margin-top:4px">'+x+'</small></div>'}
+var AIDE='<h1>Comment ça marche</h1>'+ai('Dettes','Notez ici les clients qui achètent à crédit. Touchez un client : « Il prend à crédit » ajoute une dette, « Il paie » la diminue. « Rappel par WhatsApp » prépare un message prêt à envoyer. Pour un nouveau client, touchez « + Nouveau client ».')+ai('Vendre','Choisissez le produit, la quantité, puis « Comptant » (l’argent est reçu) ou « À crédit » (la dette est ajoutée au client). Le stock baisse tout seul.')+ai('Le prix ne correspond pas ?','Dans « Vendre », le prix unitaire est modifiable : changez-le pour cette vente seulement. Pour changer le prix pour toujours, allez dans « Stock », touchez le produit et modifiez le prix de vente.')+ai('Ajouter un nouveau produit','Allez dans « Stock », touchez « + Nouveau produit », puis écrivez le nom, le prix d’achat, le prix de vente et la quantité que vous avez.')+ai('Stock','Touchez un produit pour changer son nom, ses prix ou sa quantité, ou pour le supprimer. Un ⚠ rouge apparaît quand il en reste 5 ou moins.')+ai('Bilan','Vous voyez les ventes du jour, le bénéfice estimé (grâce au prix d’achat), les dettes restantes et les produits à racheter.')+ai('Ouvrir un sac','Quand vous ouvrez un sac pour vendre au détail : allez dans « Stock », touchez « Ouvrir un sac », choisissez le sac et le produit au détail, puis écrivez la quantité par sac (ex. 25 pour 25 kg). Les deux stocks se mettent à jour.');
+function fOpen(){if(S.products.length<2){alert('Ajoutez d’abord deux produits : le sac et le détail.');return}var o=S.products.map(function(p){return'<option value="'+p.id+'">'+e(p.name)+' ('+p.qty+')</option>'}).join('');sheet('<h1>Ouvrir un sac</h1><label>Produit en sac</label><select id="b1">'+o+'</select><label>Nombre de sacs ouverts</label><input id="b2" type="number" inputmode="numeric" value="1"><label>Produit en détail</label><select id="b3">'+o+'</select><label>Quantité de détail par sac (ex. 25 pour 25 kg)</label><input id="b4" type="number" inputmode="numeric"><button class="full" onclick="doOpen()">Convertir</button>');document.getElementById('b3').selectedIndex=1}
+function doOpen(){var g=function(i){return document.getElementById(i).value};var s=S.products.filter(function(x){return x.id==g('b1')})[0],d=S.products.filter(function(x){return x.id==g('b3')})[0],n=parseInt(g('b2')),u=parseFloat(g('b4'));if(!s||!d||s.id==d.id){alert('Choisissez deux produits différents.');return}if(!(n>0)||!(u>0)){alert('Entrez le nombre de sacs et la quantité par sac.');return}if(n>s.qty){alert('Il ne reste que '+s.qty+' en stock pour '+s.name+'.');return}s.qty-=n;d.qty+=n*u;save();sheet();alert('Conversion faite : '+s.name+' −'+n+', '+d.name+' +'+(n*u));draw()}
+function wipe(){if(confirm('Tout effacer (clients, produits, ventes) et partir de zéro ?')){S={clients:[],products:[],sales:[]};save();draw()}}
+function delC(cid){if(confirm('Supprimer ce client et tout son historique ?')){S.clients=S.clients.filter(function(x){return x.id!=cid});C=null;save();draw()}}
+var HF='all',HD='';function hf(i){HF=['all','cash','credit'][i];draw()}function hd(v){HD=v||'';draw()}function tm(x){return'<small>'+new Date(x.t).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</small>'}
+function sell(){
+ var p=S.products.filter(function(x){return x.id==document.getElementById('sp').value})[0],q=parseInt(document.getElementById('sq').value);
+ if(!p||!(q>0))return;if(q>p.qty){alert('Stock insuffisant : il reste '+p.qty+'.');return}
+ var px=parseFloat(document.getElementById('spx').value);if(!(px>=0))px=p.sell;var a=px*q;p.qty-=q;
+ if(MODE=='credit'){var c=S.clients.filter(function(x){return x.id==document.getElementById('sc').value})[0];if(!c){alert('Ajoutez d’abord un client.');p.qty+=q;return}c.tx.push({t:Date.now(),k:'c',a:a,n:q+' × '+p.name})}
+ S.sales.push({t:Date.now(),a:a,p:(px-p.buy)*q,cash:MODE=='cash',n:p.name,q:q,c:(MODE=='credit'?c.name:'')});save();
+ alert('Vente enregistrée : '+f(a));draw()}
+var OK=['8d1d5e66893d2cb3ac2d229cfe0218bdb5e02badcbc7d926a2fae0c0f8421946','ee781b89671e8a797373b3da1b5f0c0ba1249030b1dc429fd98df0998b8240a3','0509f6c9fbc5e293c2eef7c75bc7bb2c48648023321446f291ab353435b78e4b','f1bcf60085ecba9f918f0b4ed435b6ce0a0d2b2744c28ae8e7c5efe0ea76ffc6','1d108e0e45ca1af2ef3a608ee4d4aca2c09cba5797db5636a7817e650c75e645','699f2dd2dfe2bab20d9d1cf5eb0bdc37139acc4763d988c74ede8990b6442d52','330fd621cd984393acc6c6d2da3d08bc4efb66ab6e4d2d019679e2b1ef64bbe8','c6fcb923272510db6195dc9c2d6351707c518d73bbf39bfdf225bcc008454552','b0e5dba5c1f6ad838fb83156fb12457a18956f79abc87b64f61cde1664de3f3f','5165bd5dc19c2b610d6f60e96fc93b347ba261d522ef10c9a6eaab2399b7cacb'];
+function sha(s){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s.trim().toUpperCase())).then(function(b){return Array.from(new Uint8Array(b)).map(function(x){return('0'+x.toString(16)).slice(-2)}).join('')})}
+var DL='';
+var PAID=['b95d5193ede733db7125c8aae98a224b14b10463cffbc3170ae37843916e4544','a64dfec73bca794895e5b4febd5ae009dab5761105d61064441b0b4079a7b25b','d427fb0a2168d58b85044ddd6c1d571839aeb9271320975335ff9e8d70d766de','27b1811e91e806cf8ff4c99d0958ef6566ec6bfdfa8a7205156efc08672320a2','1d08e8db085a439198d24c70c03e92fe81d26de49bf7e80df26c84c07a6a3c2c','fab6b68e52ac62c166d1470b702bf7c75439ea61a02a95e74bea916df1b84275','2119393b6102b3e56d1aa01cc5bf630d662b3266e6d51f86934049e2b480f5f2','4aa31a34075b8c5590cc6d71d1f7e6d55ea692c8aef0c3785bc88f5e570f18d2','79562931055532f242686eb212d03a53e6a4c855d068ecace51c4629728c4f2c','f32fed35689810755ad71dae7074e88e75e3ccc3238a0ccc823efc7be1e08ca6','8eab4ccb72fdf19daf8694a4e4fded59621acda74a6c95d8723a5bbcc0cf9968','d271a25bd9b694db7f50836a034d4808cb063e22dc50817fc52c6bd5b2de9f54','72c13c026885b5931f4a37774f7e26c44e141a174fa5144e61bb124cb8117c3b','77556835f014456235543c9b4ae889fe963f33c1bab87f4a8cbde647982a7bf0','7619ea93f5d590e478ee5d7d8aae8aafc5af22d3f9cb1a9f785508d34534e44f','4aefaa5f5f9469138eb53ddb1e9f05f2ba459a36c5ed21401b3011922743130f','5e21fef1f97a7ab0f17a2d2e894d6248b8e1862888dbbf6fa4deaceb6bec60b4','d13bf33bb67004ab29e018628dfe90f7f30a4065fcaf19c76918faa2f0c77396','1474b00bf7a40d7ce8afe5281ec16758e607cc2f5581192c9f2d0bcc1e552d2d','f3b86d04f888379726650f10438b1b145b14a6b3a05fe8bdb7e5617f1aa78cc2'];
+function dur(h){return OK.indexOf(h)>-1?14:PAID.indexOf(h)>-1?30:0}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function nowT(){var n=Date.now(),l=parseInt(ls('bc-ls'))||0;if(l>n)n=l;ls('bc-ls',String(n));return n}
+function act(h){if(!ls('bc-st-'+h))ls('bc-st-'+h,String(nowT()));ls('bc-acc',h);gate()}
+function gate(){var h=ls('bc-acc');if(!h||!dur(h)){lock();return}var st=parseInt(ls('bc-st-'+h))||nowT(),left=dur(h)-Math.floor((nowT()-st)/86400000);if(left>0){DL=(left<=3?'⚠ ':'')+'Il vous reste '+left+' jour'+(left>1?'s':'')+' d’accès. ';draw()}else expired()}
+function expired(){document.getElementById('n').innerHTML='';document.getElementById('m').innerHTML='<h1>Accès terminé</h1><p>Votre période d’accès est finie. Pour continuer, payez <b>3 000 FCFA</b> par MTN MoMo ou Moov Money au <b>0197947452</b>, puis envoyez un message : vous recevrez un nouveau code. Vos données sont conservées.</p><a class="btn wa full" target="_blank" rel="noopener" href="https://wa.me/2290197947452?text='+encodeURIComponent('Bonjour, je veux continuer Boutik Crédit. J’ai payé 3 000 F.')+'">Écrire sur WhatsApp</a><label style="display:block;margin-top:18px">J’ai un nouveau code</label><input id="ac" type="password" placeholder="Nouveau code" autocomplete="off"><button class="full" onclick="unlock()">Ouvrir</button>'}
+function lock(msg){document.getElementById('n').innerHTML='';document.getElementById('m').innerHTML='<h1>Boutik Crédit</h1><p>Entrez votre code d’accès pour ouvrir l’application.</p><input id="ac" type="password" placeholder="Code d’accès" autocapitalize="characters" autocomplete="off"><button class="full" onclick="unlock()">Ouvrir</button><p class="warn">'+(msg||'')+'</p>'}
+function unlock(){var v=document.getElementById('ac').value;if(!v.trim())return;sha(v).then(function(h){if(dur(h)){act(h)}else lock('Code incorrect.')}).catch(function(){lock('Impossible de vérifier le code. Ouvrez le lien dans Chrome.')})}
+try{var W=window.innerWidth;if(W>700)document.documentElement.style.zoom=Math.min(W/560,3)}catch(e){}
+gate();
+</script></body></html>
